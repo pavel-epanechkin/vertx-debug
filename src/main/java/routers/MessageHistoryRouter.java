@@ -1,6 +1,5 @@
 package routers;
 
-import dao.MessageInfo;
 import dto.requests.ConnectDBRequestDTO;
 import dto.responses.ListDTO;
 import dto.responses.MessageInfoDTO;
@@ -23,7 +22,7 @@ public class MessageHistoryRouter {
     @POST
     @Path("/connect")
     @Consumes("application/json")
-    public void connectHistoryDb(ConnectDBRequestDTO dto) throws IOException {
+    public void connectHistoryDb(ConnectDBRequestDTO dto) throws Exception {
         messageHistoryService.connectHistoryDb(dto.getFilePath());
     }
 
@@ -31,6 +30,18 @@ public class MessageHistoryRouter {
     @Path("/disconnect")
     public void disconnectHistoryDb() throws IOException {
         messageHistoryService.disconnectHistoryDb();
+    }
+
+    @GET
+    @Path("/processingProgress")
+    public double getProcessingProgress() throws IOException {
+        return messageHistoryService.getProcessingProgress();
+    }
+
+    @GET
+    @Path("/stopProcessing")
+    public void stopProcessing() throws IOException {
+        messageHistoryService.stopProcessing();
     }
 
     @GET

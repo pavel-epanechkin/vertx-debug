@@ -1,8 +1,8 @@
-package dao;
+package domain;
 
 import java.io.Serializable;
 
-public class MessageInfo implements Serializable {
+public class RawMessageInfo implements Serializable {
 
     private Integer recordId;
 
@@ -10,7 +10,7 @@ public class MessageInfo implements Serializable {
 
     private String label;
 
-    private Boolean received;
+    private String type;
 
     private long timestamp;
 
@@ -96,11 +96,11 @@ public class MessageInfo implements Serializable {
       this.recordId = recordId;
     }
 
-    public Boolean getReceived() {
-        return received;
+    public String getType() {
+        return type;
     }
 
-    public void setReceived(Boolean received) {
-        this.received = received;
+    public void setType(String type) {
+        this.type = type;
     }
 }

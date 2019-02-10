@@ -1,9 +1,9 @@
-package dto.responses;
+package domain;
 
 import java.io.Serializable;
 
 
-public class MessageInfoDTO implements Serializable {
+public class MessageInfo implements Serializable {
 
     private Integer ID;
 

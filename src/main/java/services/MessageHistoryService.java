@@ -2,9 +2,11 @@ package services;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dao.LimitParams;
-import dao.MessageHistoryDaoImpl;
-import dao.MessageInfo;
-import dao.MessagesHistoryDao;
+import dao.history.processed.MessageHistoryDaoImpl;
+import dao.history.raw.RawHistoryDao;
+import dao.history.raw.RawHistoryDaoImpl;
+import domain.MessageInfo;
+import dao.history.processed.MessagesHistoryDao;
 import dto.requests.PaginationParams;
 import dto.responses.ListDTO;
 import dto.responses.MessageInfoDTO;
@@ -15,24 +17,39 @@ import java.util.stream.Collectors;
 
 public class MessageHistoryService {
 
-    private MessagesHistoryDao currentHistoryDao;
+    private MessagesHistoryDao processedHistoryDao;
 
-    public void connectHistoryDb(String historyFilePath) throws IOException {
-        if (currentHistoryDao != null) {
-            currentHistoryDao.close();
+    private HistoryProcessingService historyProcessingService;
+
+    public MessageHistoryService(HistoryProcessingService historyProcessingService) {
+        this.historyProcessingService = historyProcessingService;
+    }
+
+    public void connectHistoryDb(String rawHistoryFilePath) throws Exception {
+        if (processedHistoryDao != null) {
+            processedHistoryDao.close();
         }
-        currentHistoryDao = new MessageHistoryDaoImpl(historyFilePath);
+
+        processedHistoryDao = historyProcessingService.startProcessingRawHistory(rawHistoryFilePath);
     }
 
     public void disconnectHistoryDb() throws IOException {
-        if (currentHistoryDao != null) {
-            currentHistoryDao.close();
-            currentHistoryDao = null;
+        if (processedHistoryDao != null) {
+            processedHistoryDao.close();
+            processedHistoryDao = null;
         }
     }
 
+    public double getProcessingProgress() throws IOException {
+        return historyProcessingService.getProcessingProgress();
+    }
+
+    public void stopProcessing() throws IOException {
+        historyProcessingService.stopProcessing();
+    }
+
     public MessageInfoDTO getMessageInfo(Integer id) throws IOException {
-        MessageInfo messageInfo = currentHistoryDao.getByRecordId(id);
+        MessageInfo messageInfo = processedHistoryDao.getByRecordId(id);
         return prepareMessageInfoDto(messageInfo);
     }
 
@@ -41,7 +58,7 @@ public class MessageHistoryService {
         int itemsOnPage = paginationParams.getItemsOnPage();
         int offset = pageNumber*itemsOnPage;
 
-        List<MessageInfo> messageInfos = currentHistoryDao.getByLikeFilterWithLimit(
+        List<MessageInfo> messageInfos = processedHistoryDao.getByLikeFilterWithLimit(
                 paginationParams.getFilter(),
                 new LimitParams(offset, itemsOnPage),
                 paginationParams.getStartDate(),
@@ -51,7 +68,7 @@ public class MessageHistoryService {
                 .map(this::prepareMessageInfoDto)
                 .collect(Collectors.toList());
 
-        int totalCount = currentHistoryDao.getCountByLikeFilter(
+        int totalCount = processedHistoryDao.getCountByLikeFilter(
                 paginationParams.getFilter(),
                 paginationParams.getStartDate(),
                 paginationParams.getEndDate()

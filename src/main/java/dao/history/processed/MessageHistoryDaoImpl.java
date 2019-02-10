@@ -1,6 +1,12 @@
-package dao;
+package dao.history.processed;
 
+import dao.FilterMapper;
+import dao.H2DB;
+import dao.LimitParams;
+import domain.MessageInfo;
 import org.jooq.Condition;
+import org.jooq.Record;
+import org.jooq.impl.DSL;
 
 import javax.validation.constraints.NotNull;
 import java.io.IOException;
@@ -10,6 +16,7 @@ import java.util.NoSuchElementException;
 
 import static org.jooq.impl.DSL.and;
 import static org.jooq.impl.DSL.field;
+import static org.jooq.impl.DSL.table;
 
 
 public class MessageHistoryDaoImpl implements MessagesHistoryDao {
@@ -20,17 +27,66 @@ public class MessageHistoryDaoImpl implements MessagesHistoryDao {
 
     private final String MESSAGES_TABLE = "messages";
 
-    private final String DATE_FIELD_NAME = "timestamp";
+    private final String DATE_FIELD_NAME = "SENTTIME";
+
+    private int i = 0;
 
     public MessageHistoryDaoImpl(@NotNull String storagePath) {
         storage = new H2DB(storagePath, INIT_SCRIPT_PATH);
     }
 
     @Override
+    public void insert(MessageInfo messageInfo) {
+        storage.query()
+                .insertInto(table(MESSAGES_TABLE))
+                .set(field("id"), ++i)
+                .set(field("messageId"), messageInfo.getMessageId())
+                .set(field("prevMessageId"), messageInfo.getPrevMessageId())
+                .set(field("label"), messageInfo.getLabel())
+                .set(field("received"), messageInfo.getReceived())
+                .set(field("sentTime"), messageInfo.getSentTime())
+                .set(field("receivedTime"), messageInfo.getReceived())
+                .set(field("targetAddress"), messageInfo.getTargetAddress())
+                .set(field("replyAddress"), messageInfo.getReplyAddress())
+                .set(field("headers"), messageInfo.getHeaders())
+                .set(field("body"), messageInfo.getBody())
+                .execute();
+    }
+
+    @Override
+    public void update(MessageInfo messageInfo) {
+        storage.query()
+                .update(table(MESSAGES_TABLE))
+                .set(field("messageId"), messageInfo.getMessageId())
+                .set(field("prevMessageId"), messageInfo.getPrevMessageId())
+                .set(field("label"), messageInfo.getLabel())
+                .set(field("received"), messageInfo.getReceived())
+                .set(field("sentTime"), messageInfo.getSentTime())
+                .set(field("receivedTime"), messageInfo.getReceived())
+                .set(field("targetAddress"), messageInfo.getTargetAddress())
+                .set(field("replyAddress"), messageInfo.getReplyAddress())
+                .set(field("headers"), messageInfo.getHeaders())
+                .set(field("body"), messageInfo.getBody())
+                .where(field("id").eq(messageInfo.getId()))
+                .execute();
+    }
+
+    @Override
     public MessageInfo getByRecordId(Integer id) throws NoSuchElementException, IOException {
         MessageInfo messageInfo = storage.query()
                 .select().from(MESSAGES_TABLE)
-                .where(field("recordId").eq(id))
+                .where(field("id").eq(id))
+                .limit(1)
+                .fetchOneInto(MessageInfo.class);
+
+        return messageInfo;
+    }
+
+    @Override
+    public MessageInfo getByMessageId(String messageId) {
+        MessageInfo messageInfo = storage.query()
+                .select().from(MESSAGES_TABLE)
+                .where(field("messageId").eq(messageId))
                 .limit(1)
                 .fetchOneInto(MessageInfo.class);
 
@@ -128,11 +184,11 @@ public class MessageHistoryDaoImpl implements MessagesHistoryDao {
     }
 
     private Condition prepareEqFilter(Map<String, Object> filterMap) {
-        return prepareFilter(filterMap, (field, value) -> field(field).eq(value));
+        return prepareFilter(filterMap, (field, value) -> DSL.field(field).eq(value));
     }
 
     private Condition prepareLikeFilter(Map<String, Object> filterMap) {
-        return prepareFilter(filterMap, (field, value) -> field(field).like(value + "%"));
+        return prepareFilter(filterMap, (field, value) -> DSL.field(field).like(value + "%"));
     }
 
     private Condition prepareFilter(Map<String, Object> filterMap, FilterMapper filterMapper) {

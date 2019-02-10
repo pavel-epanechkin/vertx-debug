@@ -1,4 +1,7 @@
-package dao;
+package dao.history.processed;
+
+import dao.LimitParams;
+import domain.MessageInfo;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -8,7 +11,13 @@ import java.util.NoSuchElementException;
 
 public interface MessagesHistoryDao extends Closeable {
 
+    void insert(MessageInfo messageInfo);
+
+    void update(MessageInfo messageInfo);
+
     MessageInfo getByRecordId(Integer id) throws NoSuchElementException, IOException;
+
+    MessageInfo getByMessageId(String messageId);
 
     List<MessageInfo> getByEqFilter(Map<String, Object> filterMap, Long startDate, Long endDate) throws IOException;
 

@@ -1,11 +1,11 @@
 import io.vertx.core.Vertx;
-import services.DebuggingService;
+import services.MainVerticle;
 
 public class Main {
 
     public static void main(String args[]){
         Vertx vertx = Vertx.vertx();
-        DebuggingService debuggingService = new DebuggingService();
-        vertx.deployVerticle(debuggingService);
+        MainVerticle mainVerticle = new MainVerticle();
+        vertx.deployVerticle(mainVerticle);
     }
 }

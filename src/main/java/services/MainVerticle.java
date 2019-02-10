@@ -7,7 +7,7 @@ import io.vertx.core.http.HttpServer;
 import io.vertx.ext.web.Router;
 import routers.MessageHistoryRouter;
 
-public class DebuggingService extends AbstractVerticle {
+public class MainVerticle extends AbstractVerticle {
 
     private static final int SERVER_PORT = 9999;
 
@@ -16,6 +16,8 @@ public class DebuggingService extends AbstractVerticle {
     private Router messageHistoryRouter;
 
     private MessageHistoryService messageHistoryService;
+
+    private HistoryProcessingService historyProcessingService;
 
     public void start(Future<Void> startFuture) {
         initializeServices();
@@ -30,7 +32,8 @@ public class DebuggingService extends AbstractVerticle {
     }
 
     private void initializeServices() {
-        messageHistoryService = new MessageHistoryService();
+        historyProcessingService = new HistoryProcessingService();
+        messageHistoryService = new MessageHistoryService(historyProcessingService);
     }
 
     private void registerRouters() {
