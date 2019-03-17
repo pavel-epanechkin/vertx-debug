@@ -1,42 +1,45 @@
 package services;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import dao.LimitParams;
-import dao.history.processed.MessageHistoryDaoImpl;
-import dao.history.raw.RawHistoryDao;
-import dao.history.raw.RawHistoryDaoImpl;
-import domain.MessageInfo;
-import dao.history.processed.MessagesHistoryDao;
+import dao.history.processed.interfaces.ProcessedDaoFactory;
 import dto.requests.PaginationParams;
 import dto.responses.ListDTO;
 import dto.responses.MessageInfoDTO;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.stream.Collectors;
 
 public class MessageHistoryService {
 
-    private MessagesHistoryDao processedHistoryDao;
+    private ProcessedDaoFactory daoManager;
 
     private HistoryProcessingService historyProcessingService;
+
+    private MessagesService messagesService;
+
+    private TracesService tracesService;
 
     public MessageHistoryService(HistoryProcessingService historyProcessingService) {
         this.historyProcessingService = historyProcessingService;
     }
 
     public void connectHistoryDb(String rawHistoryFilePath) throws Exception {
-        if (processedHistoryDao != null) {
-            processedHistoryDao.close();
+        if (daoManager != null) {
+            daoManager.close();
         }
 
-        processedHistoryDao = historyProcessingService.startProcessingRawHistory(rawHistoryFilePath);
+        try {
+            daoManager = historyProcessingService.startProcessingRawHistory(rawHistoryFilePath);
+            messagesService = new MessagesService(daoManager.getMessagesDao());
+            tracesService = new TracesService(daoManager.getTracesDao());
+        }
+        catch (Exception err) {
+            err.printStackTrace();
+        }
     }
 
     public void disconnectHistoryDb() throws IOException {
-        if (processedHistoryDao != null) {
-            processedHistoryDao.close();
-            processedHistoryDao = null;
+        if (daoManager != null) {
+            daoManager.close();
+            daoManager = null;
         }
     }
 
@@ -49,39 +52,23 @@ public class MessageHistoryService {
     }
 
     public MessageInfoDTO getMessageInfo(Integer id) throws IOException {
-        MessageInfo messageInfo = processedHistoryDao.getByRecordId(id);
-        return prepareMessageInfoDto(messageInfo);
+        return messagesService.getMessageInfo(id);
     }
 
-    public ListDTO getList(PaginationParams paginationParams) throws IOException {
-        int pageNumber = paginationParams.getPageNumber();
-        int itemsOnPage = paginationParams.getItemsOnPage();
-        int offset = pageNumber*itemsOnPage;
-
-        List<MessageInfo> messageInfos = processedHistoryDao.getByLikeFilterWithLimit(
-                paginationParams.getFilter(),
-                new LimitParams(offset, itemsOnPage),
-                paginationParams.getStartDate(),
-                paginationParams.getEndDate()
-        );
-        List<MessageInfoDTO> resultData = messageInfos.stream()
-                .map(this::prepareMessageInfoDto)
-                .collect(Collectors.toList());
-
-        int totalCount = processedHistoryDao.getCountByLikeFilter(
-                paginationParams.getFilter(),
-                paginationParams.getStartDate(),
-                paginationParams.getEndDate()
-        );
-
-        ListDTO resultDto = new ListDTO(pageNumber, itemsOnPage, totalCount,
-                paginationParams.getFilter(), resultData);
-
-        return resultDto;
+    public ListDTO getMessagesList(PaginationParams paginationParams) throws IOException {
+        return messagesService.getMessagesList(paginationParams);
     }
 
-    private MessageInfoDTO prepareMessageInfoDto(MessageInfo messageInfo) {
-        ObjectMapper mapper = new ObjectMapper();
-        return mapper.convertValue(messageInfo, MessageInfoDTO.class);
+    public ListDTO getTracesList(PaginationParams paginationParams) throws IOException {
+        return tracesService.getTracesList(paginationParams);
     }
+
+    public ListDTO getTraceMessages(Integer traceId, PaginationParams paginationParams) throws IOException {
+        return messagesService.getTraceMessages(traceId, paginationParams);
+    }
+
+    public ListDTO getTracesForMessage(Integer messageId, PaginationParams paginationParams) throws IOException {
+        return tracesService.getTracesForMessage(messageId, paginationParams);
+    }
+
 }

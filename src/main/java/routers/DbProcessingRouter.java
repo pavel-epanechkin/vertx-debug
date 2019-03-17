@@ -10,12 +10,12 @@ import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import java.io.IOException;
 
-@Path("/history")
-public class MessageHistoryRouter {
+@Path("/db")
+public class DbProcessingRouter {
 
     private MessageHistoryService messageHistoryService;
 
-    public MessageHistoryRouter(MessageHistoryService messageHistoryService) {
+    public DbProcessingRouter(MessageHistoryService messageHistoryService) {
         this.messageHistoryService = messageHistoryService;
     }
 
@@ -44,20 +44,4 @@ public class MessageHistoryRouter {
         messageHistoryService.stopProcessing();
     }
 
-    @GET
-    @Path("/messages/:id")
-    @Produces("application/json")
-    public MessageInfoDTO getMessageInfo(@PathParam("id") @NotNull Integer id) throws IOException {
-        MessageInfoDTO messageInfoDTO = messageHistoryService.getMessageInfo(id);
-        return messageInfoDTO;
-    }
-
-    @POST
-    @Path("/messages/list")
-    @Consumes("application/json")
-    @Produces("application/json")
-    public ListDTO getMessagesList(PaginationParams paginationParams) throws IOException {
-        ListDTO listInfo = messageHistoryService.getList(paginationParams);
-        return listInfo;
-    }
 }

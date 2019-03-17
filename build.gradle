@@ -26,7 +26,9 @@ dependencies {
     compile("org.rocksdb:rocksdbjni:5.5.1")
 
     // jOOQ
-    compile("org.jooq:jooq:3.11.5")
+    compile("org.jooq:jooq:3.11.9")
+    compile("org.jooq:jooq-meta:3.11.9")
+    compile("org.jooq:jooq-codegen:3.11.9")
 
     // Utils
     compile 'com.fasterxml.jackson.core:jackson-databind:2.9.6'
@@ -44,12 +46,12 @@ buildscript {
     }
     dependencies {
         classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.3'
-        classpath "io.franzbecker:gradle-lombok:1.14"
+        classpath 'org.jooq:jooq-codegen:3.11.9'
+        classpath 'com.h2database:h2:1.4.197'
     }
 }
 
 apply plugin: 'com.github.johnrengelman.shadow'
-apply plugin: "io.franzbecker.gradle-lombok"
 
 jar {
 
@@ -65,4 +67,32 @@ jar {
 task wrapper(type: Wrapper) {
     gradleVersion = '4.6'
 }
+
+def writer = new StringWriter()
+def xml = new groovy.xml.MarkupBuilder(writer)
+        .configuration('xmlns': 'http://www.jooq.org/xsd/jooq-codegen-3.11.0.xsd') {
+    jdbc() {
+        driver('org.h2.Driver')
+        url('jdbc:h2:file:~/testdb')
+        user('admin')
+        password('admin')
+    }
+    generator() {
+        database() {
+        }
+
+        generate([:]) {
+            pojos true
+            daos true
+        }
+        target() {
+            packageName('database.generated')
+            directory('src/main/java')
+        }
+    }
+}
+
+// Run the code generator
+// ----------------------
+org.jooq.codegen.GenerationTool.generate(writer.toString())
 

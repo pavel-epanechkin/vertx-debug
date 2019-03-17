@@ -1,6 +1,8 @@
 package dto.responses;
 
 import java.io.Serializable;
+import java.sql.Timestamp;
+import java.util.Map;
 
 
 public class MessageInfoDTO implements Serializable {
@@ -13,9 +15,9 @@ public class MessageInfoDTO implements Serializable {
 
     private Boolean RECEIVED;
 
-    private long SENTTIME;
+    private String SENTTIME;
 
-    private long RECEIVEDTIME;
+    private String RECEIVEDTIME;
 
     private String PREVMESSAGEID;
 
@@ -23,7 +25,7 @@ public class MessageInfoDTO implements Serializable {
 
     private String REPLYADDRESS;
 
-    private String headers;
+    private Map<String, Object> headers;
 
     private String body;
 
@@ -43,11 +45,11 @@ public class MessageInfoDTO implements Serializable {
       this.LABEL = label;
     }
 
-    public long getSentTime() {
+    public String getSentTime() {
       return SENTTIME;
     }
 
-    public void setSentTime(long sentTime) {
+    public void setSentTime(String sentTime) {
       this.SENTTIME = sentTime;
     }
 
@@ -75,11 +77,11 @@ public class MessageInfoDTO implements Serializable {
       this.REPLYADDRESS = replyAddress;
     }
 
-    public String getHeaders() {
+    public Map<String, Object> getHeaders() {
       return headers;
     }
 
-    public void setHeaders(String headers) {
+    public void setHeaders(Map<String, Object> headers) {
       this.headers = headers;
     }
 
@@ -107,11 +109,11 @@ public class MessageInfoDTO implements Serializable {
         this.RECEIVED = received;
     }
 
-    public long getReceivedTime() {
+    public String getReceivedTime() {
         return RECEIVEDTIME;
     }
 
-    public void setReceivedTime(long receivedTime) {
+    public void setReceivedTime(String receivedTime) {
         this.RECEIVEDTIME = receivedTime;
     }
 }

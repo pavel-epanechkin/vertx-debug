@@ -4,13 +4,9 @@ import java.io.Serializable;
 
 public class RawMessageInfo implements Serializable {
 
-    private Integer recordId;
-
     private String messageId;
 
     private String label;
-
-    private String type;
 
     private long timestamp;
 
@@ -88,19 +84,4 @@ public class RawMessageInfo implements Serializable {
       this.body = body;
     }
 
-    public Integer getRecordId() {
-      return recordId;
-    }
-
-    public void setRecordId(Integer recordId) {
-      this.recordId = recordId;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
 }
