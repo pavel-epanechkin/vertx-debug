@@ -7,8 +7,10 @@ import database.generated.public_.tables.pojos.Message;
 import dto.requests.PaginationParams;
 import dto.responses.ListDTO;
 import dto.responses.MessageInfoDTO;
+import utils.Utils;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -74,16 +76,43 @@ public class MessagesService {
 
     private MessageInfoDTO prepareMessageInfoDto(Message message) {
         ObjectMapper mapper = new ObjectMapper();
-        MessageInfoDTO messageInfoDTO = mapper.convertValue(message, MessageInfoDTO.class);
+        MessageInfoDTO messageInfoDTO = new MessageInfoDTO();
+        messageInfoDTO.setReceived(message.getReceived());
+        messageInfoDTO.setBody(message.getBody());
+        messageInfoDTO.setLabel(message.getLabel());
+        messageInfoDTO.setId(message.getId());
+        messageInfoDTO.setMessageId(message.getMessageId());
+        messageInfoDTO.setPrevMessageId(message.getPrevMessageId());
+        messageInfoDTO.setTargetAddress(message.getTargetAddress());
+        messageInfoDTO.setReplyAddress(message.getReplyAddress());
         messageInfoDTO.setSentTime(message.getSentTime().toString());
+        messageInfoDTO.setReceivedTime(message.getReceivedTime() == null ? "" : message.getReceivedTime().toString());
 
-        Map<String, Object> headers = new HashMap<>();
+        List<Map<String, Object>> headers = new ArrayList<>();
         if (message.getHeaders() != null && !message.getHeaders().isEmpty()) {
-
+            headers = prepareHeaders(message.getHeaders());
         }
-
         messageInfoDTO.setHeaders(headers);
 
         return messageInfoDTO;
+    }
+
+    private List<Map<String, Object>> prepareHeaders(String jsonHeaders) {
+        List<Map<String, Object>> resultHeaders = new ArrayList<>();
+
+        Object headersObject = Utils.getObjectFromJsonString(jsonHeaders, List.class);
+        if (headersObject != null) {
+            List<Map<String, Object>> tmpHeaders = ((List<Map<String, Object>>) headersObject);
+            for (Map<String, Object> headerMap : tmpHeaders) {
+                for (Map.Entry<String, Object> header : headerMap.entrySet()) {
+                    Map<String, Object> headerDescription = new HashMap<>();
+                    headerDescription.put("key", header.getKey());
+                    headerDescription.put("value", header.getValue());
+                    resultHeaders.add(headerDescription);
+                }
+            }
+        }
+
+        return resultHeaders;
     }
 }

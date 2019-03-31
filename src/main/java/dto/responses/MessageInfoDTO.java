@@ -2,6 +2,7 @@ package dto.responses;
 
 import java.io.Serializable;
 import java.sql.Timestamp;
+import java.util.List;
 import java.util.Map;
 
 
@@ -25,7 +26,7 @@ public class MessageInfoDTO implements Serializable {
 
     private String REPLYADDRESS;
 
-    private Map<String, Object> headers;
+    private List<Map<String, Object>> headers;
 
     private String body;
 
@@ -77,11 +78,11 @@ public class MessageInfoDTO implements Serializable {
       this.REPLYADDRESS = replyAddress;
     }
 
-    public Map<String, Object> getHeaders() {
+    public List<Map<String, Object>> getHeaders() {
       return headers;
     }
 
-    public void setHeaders(Map<String, Object> headers) {
+    public void setHeaders(List<Map<String, Object>> headers) {
       this.headers = headers;
     }
 

@@ -56,6 +56,7 @@ create index if not exists receivedIndex on message
 create table if not exists span
 (
    span_id              int not null auto_increment,
+   span_pattern_Id      int,
    first_message_label  varchar(255) not null,
    last_message_label   varchar(255) not null,
    start_time           timestamp not null,
@@ -64,14 +65,116 @@ create table if not exists span
 );
 
 /*==============================================================*/
+/* Index: span_spanPatternIdIndex                                         */
+/*==============================================================*/
+create index if not exists span_spanPatternIdIndex on span
+(
+   span_pattern_Id
+);
+
+/*==============================================================*/
+/* Table: span_pattern                                                  */
+/*==============================================================*/
+create table if not exists span_pattern
+(
+   pattern_id           int not null auto_increment,
+   hash                 varchar(16) not null,
+   occurrence_count      int,
+   primary key (pattern_id)
+);
+
+/*==============================================================*/
+/* Index: span_pattern_hashIndex                                         */
+/*==============================================================*/
+create index if not exists span_pattern_hashIndex on span_pattern
+(
+   hash
+);
+
+/*==============================================================*/
+/* Table: trace_pattern                                                  */
+/*==============================================================*/
+create table if not exists trace_pattern
+(
+   pattern_id           int not null auto_increment,
+   hash                 varchar(16) not null,
+   occurrence_count      int,
+   primary key (pattern_id)
+);
+
+/*==============================================================*/
+/* Index: trace_pattern_hashIndex                                         */
+/*==============================================================*/
+create index if not exists trace_pattern_hashIndex on trace_pattern
+(
+   hash
+);
+
+/*==============================================================*/
+/* Table: graph_pattern                                                  */
+/*==============================================================*/
+create table if not exists graph_pattern
+(
+   pattern_id           int not null auto_increment,
+   hash                 varchar(16) not null,
+   occurrence_count      int,
+   primary key (pattern_id)
+);
+
+/*==============================================================*/
+/* Index: graph_pattern_hashIndex                                         */
+/*==============================================================*/
+create index if not exists graph_pattern_hashIndex on graph_pattern
+(
+   hash
+);
+
+/*==============================================================*/
+/* Table: graph                                                  */
+/*==============================================================*/
+create table if not exists graph
+(
+   graph_id             int not null auto_increment,
+   graph_pattern_id     int,
+   primary key (graph_id)
+);
+
+/*==============================================================*/
+/* Index: graph_graph_pattern_idIndex                                         */
+/*==============================================================*/
+create index if not exists graph_graph_pattern_idIndex on graph
+(
+   graph_pattern_id
+);
+
+
+/*==============================================================*/
 /* Table: trace                                                 */
 /*==============================================================*/
 create table if not exists trace
 (
    trace_id             int not null auto_increment,
    trace_pattern_id     int,
+   graph_id             int,
    primary key (trace_id)
 );
+
+/*==============================================================*/
+/* Index: trace_trace_pattern_idIndex                                         */
+/*==============================================================*/
+create index if not exists trace_trace_pattern_idIndex on trace
+(
+   trace_pattern_id
+);
+
+/*==============================================================*/
+/* Index: trace_trace_pattern_idIndex                                         */
+/*==============================================================*/
+create index if not exists trace_trace_graph_idIndex on trace
+(
+   graph_id
+);
+
 
 /*==============================================================*/
 /* Table: trace_part                                            */
@@ -86,17 +189,17 @@ create table if not exists trace_part
 );
 
 /*==============================================================*/
-/* Index: traceIdIndex                                        */
+/* Index: trace_part_traceIdIndex                                        */
 /*==============================================================*/
-create index if not exists traceIdIndex on trace_part
+create index if not exists trace_part_traceIdIndex on trace_part
 (
    trace_id
 );
 
 /*==============================================================*/
-/* Index: spanIdIndex                                        */
+/* Index: trace_part_spanIdIndex                                        */
 /*==============================================================*/
-create index if not exists spanIdIndex on trace_part
+create index if not exists trace_part_spanIdIndex on trace_part
 (
    span_id
 );

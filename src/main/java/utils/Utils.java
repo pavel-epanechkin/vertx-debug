@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import domain.RawMessageInfo;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Utils {
 
@@ -27,6 +29,20 @@ public class Utils {
         if (object != null) {
             try {
                 return objectMapper.writeValueAsBytes(object);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return null;
+    }
+
+    public static Object getObjectFromJsonString(String json, Class objectClass) {
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        if (json != null) {
+            try {
+                return objectMapper.readValue(json, objectClass);
             } catch (IOException e) {
                 e.printStackTrace();
             }
