@@ -78,7 +78,7 @@ create index if not exists span_spanPatternIdIndex on span
 create table if not exists span_pattern
 (
    pattern_id           int not null auto_increment,
-   hash                 varchar(16) not null,
+   hash                 varchar(255) not null,
    occurrence_count      int,
    primary key (pattern_id)
 );
@@ -86,7 +86,7 @@ create table if not exists span_pattern
 /*==============================================================*/
 /* Index: span_pattern_hashIndex                                         */
 /*==============================================================*/
-create index if not exists span_pattern_hashIndex on span_pattern
+create unique index if not exists span_pattern_hashIndex on span_pattern
 (
    hash
 );
@@ -97,7 +97,7 @@ create index if not exists span_pattern_hashIndex on span_pattern
 create table if not exists trace_pattern
 (
    pattern_id           int not null auto_increment,
-   hash                 varchar(16) not null,
+   hash                 varchar(255) not null,
    occurrence_count      int,
    primary key (pattern_id)
 );
@@ -105,7 +105,7 @@ create table if not exists trace_pattern
 /*==============================================================*/
 /* Index: trace_pattern_hashIndex                                         */
 /*==============================================================*/
-create index if not exists trace_pattern_hashIndex on trace_pattern
+create unique index if not exists trace_pattern_hashIndex on trace_pattern
 (
    hash
 );
@@ -116,7 +116,7 @@ create index if not exists trace_pattern_hashIndex on trace_pattern
 create table if not exists graph_pattern
 (
    pattern_id           int not null auto_increment,
-   hash                 varchar(16) not null,
+   hash                 varchar(255) not null,
    occurrence_count      int,
    primary key (pattern_id)
 );
@@ -124,7 +124,7 @@ create table if not exists graph_pattern
 /*==============================================================*/
 /* Index: graph_pattern_hashIndex                                         */
 /*==============================================================*/
-create index if not exists graph_pattern_hashIndex on graph_pattern
+create unique index if not exists graph_pattern_hashIndex on graph_pattern
 (
    hash
 );
@@ -136,6 +136,7 @@ create table if not exists graph
 (
    graph_id             int not null auto_increment,
    graph_pattern_id     int,
+   first_span_id        int,
    primary key (graph_id)
 );
 
@@ -145,6 +146,14 @@ create table if not exists graph
 create index if not exists graph_graph_pattern_idIndex on graph
 (
    graph_pattern_id
+);
+
+/*==============================================================*/
+/* Index: graph_first_span_idIndex                                         */
+/*==============================================================*/
+create index if not exists graph_first_span_idIndex on graph
+(
+   first_span_id
 );
 
 

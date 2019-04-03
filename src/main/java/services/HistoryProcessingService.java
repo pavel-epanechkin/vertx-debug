@@ -1,23 +1,26 @@
 package services;
 
-import dao.history.processed.ProcessedDaoFactoryImpl;
+import dao.history.processed.*;
 import dao.history.processed.interfaces.ProcessedDaoFactory;
 import dao.history.raw.*;
 import dao.history.raw.interfaces.RawDaoFactory;
 import database.generated.public_.Tables;
+import database.generated.public_.tables.daos.TracePatternDao;
 import database.generated.public_.tables.pojos.*;
 import domain.*;
 import javafx.util.Pair;
+import utils.Utils;
 
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.Timestamp;
+import java.util.List;
 import java.util.Stack;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class HistoryProcessingService  {
+public class HistoryProcessingService {
 
     private Thread historyProcessingThread;
 
@@ -42,6 +45,8 @@ public class HistoryProcessingService  {
     private AtomicInteger analyzedCount = new AtomicInteger(0);
 
     private int recordsToProcessCount;
+
+    private final Integer DEFAULT_ITEMS_IN_BLOCK_COUNT = 1000;
 
 
     public ProcessedDaoFactory startProcessingRawHistory(String rawHistoryFilePath) throws Exception {
@@ -87,6 +92,8 @@ public class HistoryProcessingService  {
 
         convertAnalysis();
         fullyProcessed.set(true);
+
+        analyseHistory();
     }
 
     private void convertRawMessages() {
@@ -107,6 +114,123 @@ public class HistoryProcessingService  {
         calcullateMessagesChildsCount();
         createRawTraceUnitsAndSpans();
         createRawTraceParts();
+    }
+
+    private void analyseHistory() {
+        buildSpanPatterns();
+        buildTracePatterns();
+        buildGraphPatterns();
+    }
+
+    private void buildSpanPatterns() {
+        SpansDao spansDao = processedDaoFactory.getSpansDao();
+        SpanPatternsDao spanPatternsDao = processedDaoFactory.getSpanPatternsDao();
+
+        doForSpans(span -> {
+            List<String> messageLabels = spansDao.getSpanMessagesLabels(span.getSpanId());
+            String hash = Utils.getMD5Hash(messageLabels);
+            List<SpanPattern> spanPatterns = spanPatternsDao.fetchByHash(hash);
+
+            SpanPattern spanPattern = new SpanPattern();
+            if (spanPatterns.size() > 0) {
+                spanPattern = spanPatterns.get(0);
+                spanPattern.setOccurrenceCount(spanPattern.getOccurrenceCount() + 1);
+                spanPatternsDao.update(spanPattern);
+            }
+            else {
+                spanPattern.setHash(hash);
+                spanPattern.setOccurrenceCount(1);
+                spanPatternsDao.insert(spanPattern);
+            }
+
+            span.setSpanPatternId(spanPattern.getPatternId());
+            spansDao.update(span);
+        });
+    }
+
+    private void buildTracePatterns() {
+        TracesDao tracesDao = processedDaoFactory.getTracesDao();
+        TracePatternDao tracePatternDao = processedDaoFactory.getTracePatternsDao();
+
+        doForTraces(trace -> {
+            List<Integer> spanPatternIds = tracesDao.getTraceSpanPatternsIds(trace.getTraceId());
+            String hash = Utils.getMD5Hash(spanPatternIds);
+            List<TracePattern> tracePatterns = tracePatternDao.fetchByHash(hash);
+
+            TracePattern tracePattern = new TracePattern();
+            if (tracePatterns.size() > 0) {
+                tracePattern = tracePatterns.get(0);
+                tracePattern.setOccurrenceCount(tracePattern.getOccurrenceCount() + 1);
+                tracePatternDao.update(tracePattern);
+            }
+            else {
+                tracePattern.setHash(hash);
+                tracePattern.setOccurrenceCount(1);
+                tracePatternDao.insert(tracePattern);
+            }
+
+            trace.setTracePatternId(tracePattern.getPatternId());
+            tracesDao.update(trace);
+        });
+    }
+
+    private void buildGraphPatterns() {
+        GraphsDao graphsDao = processedDaoFactory.getGraphsDao();
+        GraphPatternsDao graphPatternsDao = processedDaoFactory.getGraphPatternsDao();
+
+        doForGraphs(graph -> {
+            List<Integer> tracePatternIds = graphsDao.getGraphTracePatternsIds(graph.getGraphId());
+            String hash = Utils.getMD5Hash(tracePatternIds);
+            List<GraphPattern> graphPatterns = graphPatternsDao.fetchByHash(hash);
+
+            GraphPattern graphPattern = new GraphPattern();
+            if (graphPatterns.size() > 0) {
+                graphPattern = graphPatterns.get(0);
+                graphPattern.setOccurrenceCount(graphPattern.getOccurrenceCount() + 1);
+                graphPatternsDao.update(graphPattern);
+            }
+            else {
+                graphPattern.setHash(hash);
+                graphPattern.setOccurrenceCount(1);
+                graphPatternsDao.insert(graphPattern);
+            }
+
+            graph.setGraphPatternId(graphPattern.getPatternId());
+            graphsDao.update(graph);
+        });
+    }
+
+    private void doForSpans(EntityAction<Span> entityAction)  {
+        int blockNumber = 0;
+        List<Span> spansBlock = processedDaoFactory.getSpansDao().getSpansBlock(blockNumber, DEFAULT_ITEMS_IN_BLOCK_COUNT);
+        while (spansBlock != null && spansBlock.size() != 0) {
+            for (Span span : spansBlock) {
+                entityAction.execute(span);
+            }
+            spansBlock = processedDaoFactory.getSpansDao().getSpansBlock(++blockNumber, DEFAULT_ITEMS_IN_BLOCK_COUNT);
+        }
+    }
+
+    private void doForTraces(EntityAction<Trace> entityAction)  {
+        int blockNumber = 0;
+        List<Trace> tracesBlock = processedDaoFactory.getTracesDao().getTracesBlock(blockNumber, DEFAULT_ITEMS_IN_BLOCK_COUNT);
+        while (tracesBlock != null && tracesBlock.size() != 0) {
+            for (Trace trace : tracesBlock) {
+                entityAction.execute(trace);
+            }
+            tracesBlock = processedDaoFactory.getTracesDao().getTracesBlock(++blockNumber, DEFAULT_ITEMS_IN_BLOCK_COUNT);
+        }
+    }
+
+    private void doForGraphs(EntityAction<Graph> entityAction)  {
+        int blockNumber = 0;
+        List<Graph> graphsBlock = processedDaoFactory.getGraphsDao().getGraphsBlock(blockNumber, DEFAULT_ITEMS_IN_BLOCK_COUNT);
+        while (graphsBlock != null && graphsBlock.size() != 0) {
+            for (Graph graph: graphsBlock) {
+                entityAction.execute(graph);
+            }
+            graphsBlock = processedDaoFactory.getGraphsDao().getGraphsBlock(++blockNumber, DEFAULT_ITEMS_IN_BLOCK_COUNT);
+        }
     }
 
     private void calcullateMessagesChildsCount() {
@@ -138,17 +262,19 @@ public class HistoryProcessingService  {
         Stack<Pair<Integer, RawSpan>> traverseStack = new Stack<>();
         traverseStack.push(new Pair<>(spanId, span));
         RawSpan currentSpan = span;
+        Integer traceFirstSpanId = spanId;
 
         while (currentSpan.getPrevSpanId() != -1) {
             Integer prevSpanId = currentSpan.getPrevSpanId();
+            traceFirstSpanId = prevSpanId;
             currentSpan = rawDaoFactory.getSpansDao().get(prevSpanId);
             traverseStack.push(new Pair<>(prevSpanId, currentSpan));
         }
 
-        int traceId = rawDaoFactory.getTracesDao().insert(new RawTrace());
+        int traceId = rawDaoFactory.getTracesDao().insert(new RawTrace(traceFirstSpanId));
         int tracePartOrderNum = 1;
         while (!traverseStack.empty()) {
-            Pair<Integer,RawSpan> currentPair = traverseStack.pop();
+            Pair<Integer, RawSpan> currentPair = traverseStack.pop();
             int tracePartId = rawDaoFactory.getTracePartsDao().insert(new RawTracePart(traceId, tracePartOrderNum++, currentPair.getKey()));
         }
 
@@ -253,7 +379,21 @@ public class HistoryProcessingService  {
     }
 
     private Trace getTraceFromRaw(RawTrace rawTrace) {
+        GraphsDao graphsDao = processedDaoFactory.getGraphsDao();
+        Integer firstTraceSpanId = rawTrace.getFirstSpanId();
+
+        Graph graph;
+        List<Graph> graphs = graphsDao.fetchByFirstSpanId(firstTraceSpanId);
+        if (graphs == null || graphs.size() == 0) {
+            graph = new Graph();
+            graph.setFirstSpanId(firstTraceSpanId);
+            graphsDao.insert(graph);
+        }
+        else
+            graph = graphs.get(0);
+
         Trace trace = new Trace();
+        trace.setGraphId(graph.getGraphId());
         return trace;
     }
 
@@ -319,5 +459,10 @@ public class HistoryProcessingService  {
         }
         return 1;
     }
+
+    private interface EntityAction<T> {
+        void execute(T entity);
+    }
+
 
 }

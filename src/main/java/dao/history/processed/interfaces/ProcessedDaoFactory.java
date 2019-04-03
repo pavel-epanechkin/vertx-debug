@@ -15,4 +15,13 @@ public interface ProcessedDaoFactory extends Closeable {
     TraceUnitsDao getTraceUnitsDao();
 
     TracePartsDao getTracePartsDao();
+
+    GraphsDao getGraphsDao();
+
+    SpanPatternsDao getSpanPatternsDao();
+
+    TracePatternsDao getTracePatternsDao();
+
+    GraphPatternsDao getGraphPatternsDao();
+
 }

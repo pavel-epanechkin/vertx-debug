@@ -4,21 +4,21 @@ import java.io.Serializable;
 
 public class RawTrace implements Serializable {
 
-    private Integer traceId;
+    private Integer firstSpanId;
 
     public RawTrace() {
 
     }
 
-    public RawTrace(Integer traceId) {
-        this.traceId = traceId;
+    public RawTrace(Integer firstSpanId) {
+        this.firstSpanId = firstSpanId;
     }
 
-    public Integer getTraceId() {
-        return traceId;
+    public Integer getFirstSpanId() {
+        return firstSpanId;
     }
 
-    public void setTraceId(Integer traceId) {
-        this.traceId = traceId;
+    public void setFirstSpanId(Integer firstSpanId) {
+        this.firstSpanId = firstSpanId;
     }
 }
