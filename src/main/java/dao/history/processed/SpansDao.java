@@ -30,9 +30,9 @@ public class SpansDao extends SpanDao {
                 .fetchInto(Span.class);
     }
 
-    public List<String> getSpanMessagesLabels(Integer spanId) {
+    public List<Integer> getSpanMessageLabelIds(Integer spanId) {
         return storage.query()
-                .select(Tables.MESSAGE.LABEL).from(Tables.SPAN, Tables.TRACE_UNIT, Tables.MESSAGE)
+                .select(Tables.MESSAGE.LABEL_ID).from(Tables.SPAN, Tables.TRACE_UNIT, Tables.MESSAGE)
                 .where(
                     and(
                         field(Tables.SPAN.SPAN_ID).eq(spanId),
@@ -41,7 +41,7 @@ public class SpansDao extends SpanDao {
                     )
                 )
                 .orderBy(Tables.TRACE_UNIT.ORDER_NUM)
-                .fetchInto(String.class);
+                .fetchInto(Integer.class);
     }
 
 }

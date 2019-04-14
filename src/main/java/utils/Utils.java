@@ -7,6 +7,7 @@ import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -55,7 +56,7 @@ public class Utils {
         return null;
     }
 
-    public static String getMD5Hash(Object object) {
+    private static String getMD5Hash(Object object) {
         String result = "";
 
         try {
@@ -71,7 +72,7 @@ public class Utils {
         return result;
     }
 
-    public static String getMD5Hash(List<Object> objects) {
+    public static String getMD5Hash(List objects) {
         String result = "";
 
         try {
@@ -87,5 +88,37 @@ public class Utils {
         }
 
         return result;
+    }
+
+    public static <T> int getLevenshteinDistanceBetweenLists(List<T> x, List<T> y) {
+        int[][] dp = new int[x.size() + 1][y.size() + 1];
+
+        for (int i = 0; i <= x.size(); i++) {
+            for (int j = 0; j <= y.size(); j++) {
+                if (i == 0) {
+                    dp[i][j] = j;
+                }
+                else if (j == 0) {
+                    dp[i][j] = i;
+                }
+                else {
+                    dp[i][j] = min(dp[i - 1][j - 1]
+                                    + costOfSubstitution(x.get(i - 1), y.get(j - 1)),
+                            dp[i - 1][j] + 1,
+                            dp[i][j - 1] + 1);
+                }
+            }
+        }
+
+        return dp[x.size()][y.size()];
+    }
+
+    private static <T> int costOfSubstitution(T a, T b) {
+        return a.equals(b) ? 0 : 1;
+    }
+
+    private static int min(int... numbers) {
+        return Arrays.stream(numbers)
+                .min().orElse(Integer.MAX_VALUE);
     }
 }

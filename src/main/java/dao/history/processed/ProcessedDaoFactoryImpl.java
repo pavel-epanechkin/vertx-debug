@@ -45,6 +45,11 @@ public class ProcessedDaoFactoryImpl implements dao.history.processed.interfaces
     }
 
     @Override
+    public TraceLabelsDao getTraceLabelsDao() {
+        return new TraceLabelsDao(storage);
+    }
+
+    @Override
     public SpanPatternsDao getSpanPatternsDao() {
         return new SpanPatternsDao(storage);
     }
@@ -57,6 +62,11 @@ public class ProcessedDaoFactoryImpl implements dao.history.processed.interfaces
     @Override
     public GraphPatternsDao getGraphPatternsDao() {
         return new GraphPatternsDao(storage);
+    }
+
+    @Override
+    public GraphPatternsStructureAnomaliesDao getGraphPatternsStructureAnomaliesDao() {
+        return new GraphPatternsStructureAnomaliesDao(storage);
     }
 
     public void close() {

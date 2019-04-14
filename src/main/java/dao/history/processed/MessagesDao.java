@@ -73,4 +73,15 @@ public class MessagesDao extends MessageDao implements PageableDao<Message> {
                 .get(0).value1();
     }
 
+    public Message fetchOneByLabel(String label) {
+        return storage.query()
+                .select().from(Tables.MESSAGE)
+                .where(
+                    field(Tables.MESSAGE.LABEL).eq(label)
+
+                )
+                .limit(1)
+                .fetchOneInto(Message.class);
+    }
+
 }

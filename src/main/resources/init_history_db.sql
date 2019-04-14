@@ -8,6 +8,7 @@ create table if not exists message
    message_id           varchar(32) not null,
    prev_message_id      varchar(32) not null,
    label                varchar(255) not null,
+   label_id             int not null,
    received             bool not null,
    sent_time            timestamp not null,
    received_time        timestamp,
@@ -43,6 +44,14 @@ create index if not exists labelIndex on message
 );
 
 /*==============================================================*/
+/* Index: label_IdIndex                                            */
+/*==============================================================*/
+create index if not exists label_IdIndex on message
+(
+   label_id
+);
+
+/*==============================================================*/
 /* Index: receivedIndex                                         */
 /*==============================================================*/
 create index if not exists receivedIndex on message
@@ -70,6 +79,16 @@ create table if not exists span
 create index if not exists span_spanPatternIdIndex on span
 (
    span_pattern_Id
+);
+
+/*==============================================================*/
+/* Table: trace_label                                                  */
+/*==============================================================*/
+create table if not exists trace_label
+(
+   label_id           int not null auto_increment,
+   occurrence_count      int,
+   primary key (label_id)
 );
 
 /*==============================================================*/
@@ -239,6 +258,33 @@ create unique index if not exists trace_unit_messageIdIndex on trace_unit
 create index if not exists trace_unit_spanIdIndex on trace_unit
 (
    span_id
+);
+
+/*==============================================================*/
+/* Table: graph_pattern_structure_anomaly                                            */
+/*==============================================================*/
+create table if not exists graph_pattern_structure_anomaly
+(
+   anomaly_id                 int not null auto_increment,
+   anomaly_graph_pattern_id   int not null,
+   related_graph_pattern_id   int not null,
+   primary key (anomaly_id)
+);
+
+/*==============================================================*/
+/* Index: graph_pattern_structure_anomaly_anomaly_graph_pattern_idIndex                                        */
+/*==============================================================*/
+create unique index if not exists graph_pattern_structure_anomaly_anomaly_graph_pattern_idIndex on graph_pattern_structure_anomaly
+(
+   anomaly_graph_pattern_id
+);
+
+/*==============================================================*/
+/* Index: graph_pattern_structure_anomaly_related_graph_pattern_idIndex                                        */
+/*==============================================================*/
+create unique index if not exists graph_pattern_structure_anomaly_related_graph_pattern_idIndex on graph_pattern_structure_anomaly
+(
+   related_graph_pattern_id
 );
 
 

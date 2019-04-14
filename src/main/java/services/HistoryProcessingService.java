@@ -127,8 +127,8 @@ public class HistoryProcessingService {
         SpanPatternsDao spanPatternsDao = processedDaoFactory.getSpanPatternsDao();
 
         doForSpans(span -> {
-            List<String> messageLabels = spansDao.getSpanMessagesLabels(span.getSpanId());
-            String hash = Utils.getMD5Hash(messageLabels);
+            List<Integer> messageLabelIds = spansDao.getSpanMessageLabelIds(span.getSpanId());
+            String hash = Utils.getMD5Hash(messageLabelIds);
             List<SpanPattern> spanPatterns = spanPatternsDao.fetchByHash(hash);
 
             SpanPattern spanPattern = new SpanPattern();
@@ -429,6 +429,7 @@ public class HistoryProcessingService {
     private Message getMessageFromRawRecord(RawMessageInfo rawMessageInfo) {
         Message message = new Message();
         message.setLabel(rawMessageInfo.getLabel());
+        message.setLabelId(getMessageLabelId(rawMessageInfo.getLabel()));
         message.setMessageId(rawMessageInfo.getMessageId());
         message.setPrevMessageId(rawMessageInfo.getPrevMessageId());
         message.setSentTime(new Timestamp(rawMessageInfo.getTimestamp()));
@@ -439,6 +440,26 @@ public class HistoryProcessingService {
         message.setReceived(false);
 
         return message;
+    }
+
+    private Integer getMessageLabelId(String label) {
+        TraceLabelsDao traceLabelsDao = processedDaoFactory.getTraceLabelsDao();
+        MessagesDao messagesDao = processedDaoFactory.getMessagesDao();
+
+        Message message = messagesDao.fetchOneByLabel(label);
+
+        if (message != null) {
+            TraceLabel traceLabel = traceLabelsDao.fetchOneByLabelId(message.getLabelId());
+            traceLabel.setOccurrenceCount(traceLabel.getOccurrenceCount() + 1);
+            traceLabelsDao.update(traceLabel);
+            return message.getLabelId();
+        }
+
+        TraceLabel traceLabel = new TraceLabel();
+        traceLabel.setOccurrenceCount(1);
+        traceLabelsDao.insert(traceLabel);
+
+        return traceLabel.getLabelId();
     }
 
     public void stopProcessing() {
